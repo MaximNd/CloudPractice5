@@ -6,10 +6,11 @@ import java.util.List;
 import com.google.devrel.training.conference.form.ProfileForm.TeeShirtSize;
 import com.googlecode.objectify.ObjectifyService;
 import com.googlecode.objectify.annotation.Entity;
+import com.googlecode.objectify.annotation.Cache;
 import com.googlecode.objectify.annotation.Id;
 import com.google.common.collect.ImmutableList;
 
-
+@Cache
 @Entity public class Profile {
 	String displayName;
 	String mainEmail;

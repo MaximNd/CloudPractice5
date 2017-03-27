@@ -10,6 +10,7 @@ import com.google.api.server.spi.response.ForbiddenException;
 import com.google.api.server.spi.response.UnauthorizedException;
 import com.google.appengine.api.users.User;
 import com.google.devrel.training.conference.Constants;
+import com.google.devrel.training.conference.domain.Announcement;
 import com.google.devrel.training.conference.domain.Conference;
 import com.google.devrel.training.conference.domain.Profile;
 import com.google.devrel.training.conference.form.ConferenceForm;
@@ -20,6 +21,11 @@ import com.google.devrel.training.conference.form.ProfileForm.TeeShirtSize;
 import com.google.devrel.training.conference.service.OfyService;
 import com.googlecode.objectify.Key;
 import com.googlecode.objectify.Work;
+import com.google.appengine.api.memcache.MemcacheService;
+import com.google.appengine.api.memcache.MemcacheServiceFactory;
+import com.google.appengine.api.taskqueue.Queue;
+import com.google.appengine.api.taskqueue.QueueFactory;
+import com.google.appengine.api.taskqueue.TaskOptions;
 
 import javax.inject.Named;
 
@@ -184,6 +190,10 @@ public class ConferenceApi {
         // TODO (Lesson 4)
         // Save Conference and Profile Entities
         ofy().save().entities(conference, profile).now();
+        
+        Queue queue = QueueFactory.getQueue("email-queue");
+        
+        queue.add(TaskOptions.Builder.withUrl("/task/send_confirmation_email").param("UserEmailInfo", user.getEmail()).param("conferenceInfo", conference.toString()));
         
         return conference;
    }
@@ -453,6 +463,27 @@ public class ConferenceApi {
     ) throws UnauthorizedException, NotFoundException, ForbiddenException, ConflictException {
     	
     	return null;
+    }
+    
+    @ApiMethod(
+    	name="getAnnouncement",
+	    path = "announcement",
+	    httpMethod = HttpMethod.GET
+	    )
+    public Announcement getAnnouncement(){
+    //GET announcement from memcache by key and if it exist return it
+ 		    
+ 		MemcacheService memcacheService = MemcacheServiceFactory.getMemcacheService();
+ 
+ 		Object messageFromMemcache = memcacheService.get(Constants.MEMCACHE_ANNOUNCEMENTS_KEY);
+ 
+ 		    
+ 		if (messageFromMemcache != null) {
+ 			return new Announcement(messageFromMemcache.toString());
+ 		}
+ 			
+ 			
+ 		return null;
     }
 
 
